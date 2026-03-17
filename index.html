@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Bracket Perfect</title>
+
+<style>
+
+body{
+  background:#0f172a;
+  font-family:Arial;
+  color:white;
+  padding:40px;
+  overflow-x:auto;
+}
+
+/* layout */
+.bracket{
+  display:flex;
+  gap:120px;
+  align-items:flex-start;
+}
+
+/* round */
+.round{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+/* title */
+.round-title{
+  margin-bottom:20px;
+  font-size:16px;
+  font-weight:bold;
+  color:#38bdf8;
+}
+
+/* =========================================
+   🎛️ MASTER CONTROL (ปรับตรงนี้จุดเดียว)
+   ========================================= */
+:root{
+  /* 1) ช่องว่างกลางของแต่ละรอบ (ที่คุณวง) */
+  --space-r16: 00px;
+  --space-r8:  00px;
+  --space-r4:  00px;
+
+  /* 2) ระยะระหว่าง match (แนวตั้งของแต่ละรอบ) */
+  --gap-r32: 20px;
+  --gap-r16: 90px;
+  --gap-r8:  210px;
+  --gap-r4:  380px;
+
+  /* 3) ระยะเลื่อนทั้งคอลัมน์ (ดันขึ้น/ลง) */
+  --offset-r16: 00px;
+  --offset-r8: 00px;
+  --offset-r4:  000px;
+  --offset-final: 520px;
+
+  /* ระยะระหว่าง FINAL กับ 3rd */
+  --final-gap: 100px;
+}
+
+
+/* =========================================
+   🧱 APPLY: ROUND SPACING
+   ========================================= */
+
+/* ROUND 32 */
+#round32{
+  gap: var(--gap-r32);
+}
+
+/* ROUND 16 */
+#round16{
+  gap: var(--gap-r16);
+  margin-top: var(--offset-r16);
+  padding-top: var(--space-r16); /* 🔥 ช่องว่างที่วง */
+}
+
+/* QUARTER FINAL */
+#round8{
+  gap: var(--gap-r8);
+  margin-top: var(--offset-r8);
+  padding-top: var(--space-r8);  /* 🔥 ช่องว่างที่วง */
+}
+
+/* SEMI FINAL */
+#round4{
+  gap: var(--gap-r4);
+  margin-top: var(--offset-r4);
+  padding-top: var(--space-r4);  /* 🔥 ช่องว่างที่วง */
+}
+
+
+/* =========================================
+   🏆 FINAL + 3RD
+   ========================================= */
+.final-group{
+  display:flex;
+  flex-direction:column;
+  gap: var(--final-gap);
+  margin-top: var(--offset-final);
+}
+
+/* match */
+.match{
+  background:#1e293b;
+  padding:10px;
+  border-radius:10px;
+  width:220px;
+  height:60px;
+  box-sizing:border-box;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+/* team */
+.team{
+  display:flex;
+  justify-content:space-between;
+  padding:2px 6px;
+  border-radius:6px;
+}
+
+/* winner */
+.winner{
+  background:#22c55e;
+  color:black;
+  font-weight:bold;
+}
+
+/* score */
+.score{
+  color:#38bdf8;
+  font-weight:bold;
+}
+
+/* 🔥 เส้น FIX */
+.match::after{
+  content:"";
+  position:absolute;
+  right:-70px;
+  top:50%;
+  width:70px;
+  height:2px;
+  background:white;
+}
+
+.match::before{
+  content:"";
+  position:absolute;
+  right:-70px;
+  width:70px;
+  height:50%;
+  border-right:2px solid white;
+}
+
+/* บน */
+.match:nth-child(odd)::before{
+  top:0;
+  border-bottom:2px solid white;
+}
+
+.match:nth-child(even)::before{
+  top:50%;
+  border-top:2px solid white;
+}
+
+/* ปิดเส้น FINAL */
+#final .match::before,
+#final .match::after,
+#third .match::before,
+#third .match::after{
+  display:none;
+}
+
+/* highlight */
+#final .match{
+  border:2px solid gold;
+}
+
+#third .match{
+  border:2px solid #cd7f32;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2 style="text-align:center;">🏆 TOURNAMENT BRACKET</h2>
+
+<div class="bracket">
+
+<div class="round" id="round32">
+  <div class="round-title">ROUND 32</div>
+</div>
+
+<div class="round" id="round16">
+  <div class="round-title">ROUND 16</div>
+</div>
+
+<div class="round" id="round8">
+  <div class="round-title">QUARTER FINAL</div>
+</div>
+
+<div class="round" id="round4">
+  <div class="round-title">SEMI FINAL</div>
+</div>
+
+<div class="final-group">
+
+  <div class="round" id="final">
+    <div class="round-title">FINAL 🏆</div>
+  </div>
+
+  <div class="round" id="third">
+    <div class="round-title">3RD PLACE 🥉</div>
+  </div>
+
+</div>
+
+</div>
+
+<script>
+
+/* 🔥 ใส่ API ของคุณ */
+const api = "https://opensheet.elk.sh/1duipla4X9pyJmBPaci2LQem7S3FM9eschnMLjZRwSd8/API"
+
+async function loadData(){
+
+  try{
+
+    let res = await fetch(api)
+    let data = await res.json()
+
+    render(data.slice(0,16), "round32")
+    render(data.slice(16,24), "round16")
+    render(data.slice(24,28), "round8")
+    render(data.slice(28,30), "round4")
+    render(data.slice(30,31), "final")
+    render(data.slice(31,32), "third")
+
+  }catch(e){
+    console.log(e)
+  }
+
+}
+
+function render(matches, id){
+
+  let el = document.getElementById(id)
+
+  el.querySelectorAll(".match").forEach(e => e.remove())
+
+  matches.forEach(m => {
+
+    if(!m.Team1 || !m.Team2) return
+
+    let s1 = parseInt(m.Score1) || 0
+    let s2 = parseInt(m.Score2) || 0
+
+    let w1 = s1 > s2 ? "winner" : ""
+    let w2 = s2 > s1 ? "winner" : ""
+
+    let div = document.createElement("div")
+    div.className = "match"
+
+    div.innerHTML = `
+      <div class="team ${w1}">
+        <span>${m.Team1}</span>
+        <span class="score">${s1}</span>
+      </div>
+      <div class="team ${w2}">
+        <span>${m.Team2}</span>
+        <span class="score">${s2}</span>
+      </div>
+    `
+
+    el.appendChild(div)
+
+  })
+
+}
+
+loadData()
+setInterval(loadData, 5000)
+
+</script>
+
+</body>
+</html>
